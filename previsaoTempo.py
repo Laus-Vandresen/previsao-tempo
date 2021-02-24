@@ -1,8 +1,10 @@
 import requests
 import json
 from datetime import date
+import urllib.parse
 
 accuwheaterApiKey = 'gbdGCHk5hXTYCMeIPzQbkbCFGHmrwXeI'
+mapBoxToken = 'pk.eyJ1IjoibGF1c3ZhbiIsImEiOiJja2xqeTk5NHgzMzlvMm90a2xhaDAzYzIwIn0.JuD8eonQkwAirBacw8Zarg'
 diasSemana = ['Domingo', 'Segunda-Feira', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira','Sábado']
 
 def pegarCoordenadas():
@@ -59,8 +61,7 @@ def pegarPrevisaoProximosDias(codigoLocal):
     weatherFiveUrl = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/' + codigoLocal + '?apikey=' + accuwheaterApiKey + '&language=pt-br&metric=true'
     r = requests.get(weatherFiveUrl)
     if r.status_code != 200:
-        print('Não foi possivel obter o clima atual')
-        
+        print('Não foi possivel obter o clima atual') 
     else:
         try:
             weatherResponse = json.loads(r.text)
@@ -76,22 +77,70 @@ def pegarPrevisaoProximosDias(codigoLocal):
         except:
             print('Não foi possivel obter o clima atual')
 
+def mostrarPrevisao(lat, long):
+    try:
+        local = pegarCodigoLocal(lat, long)
+        climaAtual = pegarTempoAgora(local['codigoLocal'], local['nomeLocal'])
+        print('Clima atual em ' + climaAtual['nomeLocal'])
+        print(climaAtual['textoClima'])
+        print('Temperatura ' + str(climaAtual['temperatura']) + '\xb0' + 'C')
+    except:
+        print('Erro ao obter o clima atual')
+        return None
+
+    respostaUsuario = input('Deseja ver o clima dos próximos dias? (s ou n): ').lower()
+    if respostaUsuario == 's':
+        print('\nClima para hoje e os próximos dias: \n')
+        try:
+            previsao5Dias = pegarPrevisaoProximosDias(local['codigoLocal'])
+            for day in previsao5Dias:
+                print(day['dia'])
+                print('Mínima: ' + str(day['min']) + '\xb0' + 'C')
+                print('Máxima: ' + str(day['max']) + '\xb0' + 'C')
+                print('Clima: ' + day['clima'])
+                print('\n')
+        except:
+            print('Erro ao obter a previsão para os próximos dias')
+            return None
+
+def pesquisarLocal(local):
+    _local = urllib.parse.quote(local)
+    mapBoxUrl = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + _local +'.json?access_token=' + mapBoxToken
+    r = requests.get(mapBoxUrl)
+    if r.status_code != 200:
+        print('Não foi possivel obter a localização') 
+    else:
+        try:
+            localizationResponse = json.loads(r.text)
+            coordenadas = {}
+            coordenadas['long'] = str(localizationResponse['features'][0]['geometry']['coordinates'][0])
+            coordenadas['lat'] = str(localizationResponse['features'][0]['geometry']['coordinates'][1])
+            return coordenadas
+        except:
+            print('Não foi possivel obter o clima atual')
+            return None
+
+
+
 
 try:
     coordenadas = pegarCoordenadas()
-    local = pegarCodigoLocal(coordenadas['lat'], coordenadas['long'])
-    climaAtual = pegarTempoAgora(local['codigoLocal'], local['nomeLocal'])
-    print('Clima atual em ' + climaAtual['nomeLocal'])
-    print(climaAtual['textoClima'])
-    print('Temperatura ' + str(climaAtual['temperatura']) + '\xb0' + 'C')
-
-    print('\nClima para hoje e os próximos dias: \n')
-    previsao5Dias = pegarPrevisaoProximosDias(local['codigoLocal'])
-    for day in previsao5Dias:
-        print(day['dia'])
-        print('Mínima: ' + str(day['min']) + '\xb0' + 'C')
-        print('Máxima: ' + str(day['max']) + '\xb0' + 'C')
-        print('Clima: ' + day['clima'])
+    mostrarPrevisao(coordenadas['lat'], coordenadas['long'])
+    
+    continuar = 's'
+    while continuar == 's':
+        continuar = input('Deseja consultar a previsão de outro local? (s ou n): ').lower()
         print('\n')
+        if continuar != 's':
+            break
+        local = input('Digite a cidade e o estado: ')
+        print('\n')
+        try:
+            responseLocal = pesquisarLocal(local)
+            mostrarPrevisao(responseLocal['lat'], responseLocal['long'])
+        except:
+            print('Não foi possível obter a previsão do tempo do local')
+
+
 except:
     print('Erro ao processar Solicitação. Entre em contato com o suporte')
