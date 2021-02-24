@@ -31,10 +31,10 @@ def pegarCodigoLocal(lat, long):
         return None
     else:
         try:
-            locationResponse = json.loads(r.text)
+            localizacao = json.loads(r.text)
             infoLocal = {}
-            infoLocal['nomeLocal'] = locationResponse['LocalizedName'] + ',' + locationResponse['AdministrativeArea']['LocalizedName'] + '. ' + locationResponse['Country']['LocalizedName']
-            infoLocal['codigoLocal'] = locationResponse['Key']
+            infoLocal['nomeLocal'] = localizacao['LocalizedName'] + ',' + localizacao['AdministrativeArea']['LocalizedName'] + '. ' + localizacao['Country']['LocalizedName']
+            infoLocal['codigoLocal'] = localizacao['Key']
             return infoLocal
         except:
             return None
@@ -64,9 +64,9 @@ def pegarPrevisaoProximosDias(codigoLocal):
         print('Não foi possivel obter o clima atual') 
     else:
         try:
-            weatherResponse = json.loads(r.text)
+            respostaClima = json.loads(r.text)
             infoClima5Dias = []
-            for day in weatherResponse['DailyForecasts']:
+            for day in respostaClima['DailyForecasts']:
                 climaDia = {}
                 climaDia['max'] = day['Temperature']['Maximum']['Value']
                 climaDia['min'] = day['Temperature']['Minimum']['Value']
@@ -111,15 +111,14 @@ def pesquisarLocal(local):
         print('Não foi possivel obter a localização') 
     else:
         try:
-            localizationResponse = json.loads(r.text)
+            localizacao = json.loads(r.text)
             coordenadas = {}
-            coordenadas['long'] = str(localizationResponse['features'][0]['geometry']['coordinates'][0])
-            coordenadas['lat'] = str(localizationResponse['features'][0]['geometry']['coordinates'][1])
+            coordenadas['long'] = str(localizacao['features'][0]['geometry']['coordinates'][0])
+            coordenadas['lat'] = str(localizacao['features'][0]['geometry']['coordinates'][1])
             return coordenadas
         except:
             print('Não foi possivel obter o clima atual')
             return None
-
 
 
 
