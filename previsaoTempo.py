@@ -1,8 +1,9 @@
 import requests
 import json
-import pprint
+from datetime import date
 
 accuwheaterApiKey = 'gbdGCHk5hXTYCMeIPzQbkbCFGHmrwXeI'
+diasSemana = ['Domingo', 'Segunda-Feira', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira','Sábado']
 
 def pegarCoordenadas():
     r = requests.get('http://www.geoplugin.net/json.gp')
@@ -65,11 +66,11 @@ def pegarPrevisaoProximosDias(codigoLocal):
             weatherResponse = json.loads(r.text)
             infoClima5Dias = []
             for day in weatherResponse['DailyForecasts']:
-                climaDia = []
+                climaDia = {}
                 climaDia['max'] = day['Temperature']['Maximum']['Value']
                 climaDia['min'] = day['Temperature']['Minimum']['Value']
                 climaDia['clima'] = day['Day']['IconPhrase']
-                climaDia['dia'] = day['EpochDate']
+                climaDia['dia'] = diasSemana[int(date.fromtimestamp(day['EpochDate']).strftime('%w'))]
                 infoClima5Dias.append(climaDia)
             return infoClima5Dias
         except:
@@ -86,12 +87,11 @@ try:
 
     print('\nClima para hoje e os próximos dias: \n')
     previsao5Dias = pegarPrevisaoProximosDias(local['codigoLocal'])
-    print(previsao5Dias)
+    for day in previsao5Dias:
+        print(day['dia'])
+        print('Mínima: ' + str(day['min']) + '\xb0' + 'C')
+        print('Máxima: ' + str(day['max']) + '\xb0' + 'C')
+        print('Clima: ' + day['clima'])
+        print('\n')
 except:
     print('Erro ao processar Solicitação. Entre em contato com o suporte')
-
-
-
-
-
-
